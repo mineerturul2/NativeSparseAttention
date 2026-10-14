@@ -24,6 +24,19 @@ def mask_to_img(mask: torch.Tensor, path: str, title: str):
     plt.close()
 
 
+def sparsity(mask: torch.Tensor) -> float:
+    """Return the fraction of masked-out (``False``) entries in a boolean mask.
+
+    This is the mask analogue of a tensor's density: ``1.0`` means fully
+    masked out, ``0.0`` means fully attended. It complements ``mask_to_img``
+    for quickly reporting how sparse an attention or block mask is.
+
+    Args:
+        mask: Boolean tensor whose entries are ``True`` where attention is kept.
+    """
+    return 1.0 - mask.float().mean().item()
+
+
 def describe(t: torch.Tensor, name: str = "", /) -> str:
     """Return a compact human-readable description of a tensor's shape, dtype,
     device, value range, mean, std, memory footprint, and gradient status.
