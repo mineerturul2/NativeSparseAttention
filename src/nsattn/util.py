@@ -37,6 +37,25 @@ def sparsity(mask: torch.Tensor) -> float:
     return 1.0 - mask.float().mean().item()
 
 
+def counts(mask: torch.Tensor) -> tuple[int, int]:
+    """Return absolute counts of kept and masked-out entries in a boolean mask.
+
+    Where ``sparsity`` reports the *fraction* of masked-out entries, this
+    returns the raw ``(kept, masked)`` counts. Together they make it easy to
+    report both the proportion and the absolute number of attention positions
+    being ignored for a given mask size.
+
+    Args:
+        mask: Boolean tensor whose entries are ``True`` where attention is kept.
+
+    Returns:
+        A tuple ``(kept, masked)`` where ``kept`` is the number of ``True``
+        entries and ``masked`` is the number of ``False`` entries.
+    """
+    kept = int(mask.sum().item())
+    return kept, int(mask.numel()) - kept
+
+
 def describe(t: torch.Tensor, name: str = "", /) -> str:
     """Return a compact human-readable description of a tensor's shape, dtype,
     device, value range, mean, std, memory footprint, and gradient status.
