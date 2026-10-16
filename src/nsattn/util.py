@@ -56,6 +56,44 @@ def counts(mask: torch.Tensor) -> tuple[int, int]:
     return kept, int(mask.numel()) - kept
 
 
+def model_summary(model: torch.nn.Module, /, *, verbose: bool = True) -> str:
+    """Return a compact parameter-count summary of a ``torch.nn.Module``.
+
+    When *verbose* is ``True`` (the default), the returned string includes one
+    line per submodule with its parameter count, plus a final line for the full
+    model total.  When *verbose* is ``False`` only the total line is returned.
+
+    Args:
+        model: The PyTorch module to summarise.
+        verbose: If ``True``, include a per-child breakdown.
+
+    Returns:
+        A multi-line summary string.
+    """
+    lines: list[str] = []
+    total = 0
+    trainable = 0
+
+    def _fmt(n: int) -> str:
+        if n >= 1_000_000:
+            return f"{n/1_000_000:.1f}M"
+        if n >= 1_000:
+            return f"{n/1_000:.1f}K"
+        return str(n)
+
+    for name_, child in model.named_children():
+        n = sum(p.numel() for p in child.parameters())
+        t = sum(p.numel() for p in child.parameters() if p.requires_grad)
+        total += n
+        trainable += t
+        if verbose:
+            lines.append(f"  {name_:20s}  {_fmt(n):>8s}  params  ({_fmt(t)} trainable)")
+
+    lines.append(f"  {'—' * 30:—>30s}")
+    lines.append(f"  {'total':20s}  {_fmt(total):>8s}  params  ({_fmt(trainable)} trainable)")
+    return "\n".join(lines)
+
+
 def describe(t: torch.Tensor, name: str = "", /) -> str:
     """Return a compact human-readable description of a tensor's shape, dtype,
     device, value range, mean, std, memory footprint, and gradient status.
